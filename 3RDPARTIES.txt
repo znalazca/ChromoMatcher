@@ -1,0 +1,24 @@
+This project uses these 3-rd party components:
+
+Dodecad Ancestry Project by Dienekes Pontikos
+It has custom license.
+Homepage - http://dodecad.blogspot.com.by/
+Author - http://dienekes.blogspot.com/
+Available for download at http://dodecad.blogspot.com.by/2011/09/do-it-yourself-dodecad-v-21.html
+
+Eurogenes Genetic Ancestry Project
+Homepage - http://bga101.blogspot.com
+I haven't found license information with admixture data (it is available for download) 
+so I had to ask a permission to include it in my project (and got it). I suppose you have to ask them 
+if you have plans for redistributing their data.
+
+QuaZIP - Qt/C++ wrapper for Minizip by Sergei Tachenov and contributors.
+It is distributed under GNU LESSER GENERAL PUBLIC LICENSE Version 2.1
+
+zlib library.
+Homepage - http://www.zlib.net/
+It has custom license.
+
+Qt library.
+Homepage - https://www.qt.io/
+It has various licensing options.
