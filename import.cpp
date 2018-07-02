@@ -285,7 +285,7 @@ void Import::matchingSegment(QFile *file, QList<Segment*> *segments)
         QString line = file->readLine();
 
         // Get kit
-        QRegularExpression matcher("\">[AMTHWEGZ]{1}[0-9]+<");
+        QRegularExpression matcher(">[AMTHWEGZ]{1}[0-9]+<");
         if(matcher.match(line).hasMatch())
         {
             QStringList records = line.split(QRegExp("<\\/td>"));
@@ -293,7 +293,8 @@ void Import::matchingSegment(QFile *file, QList<Segment*> *segments)
 
             foreach (QString record, records)
             {
-                QString pureRecord = record.replace(QRegExp("<tr>|<td align=\"center\">|<\\/td>|,|<td>"), "");
+                // Leave only useful data and preserve compatibility with older saved pages
+                QString pureRecord = record.replace(QRegExp("<tr>|<td align=[\"]*center[\"]*>|<\\/td>|,|<td>"), "");
                 pureRecords.append(pureRecord);
             }
 
@@ -322,10 +323,10 @@ void Import::matchingSegment(QFile *file, QList<Segment*> *segments)
             // Get color
             line = file->readLine();
 
-            matcher.setPattern("height=\"15\" bgcolor=\"#[A-Z0-9]{6}");
+            matcher.setPattern("#[A-Z0-9]{6}");
             if(matcher.match(line).hasMatch())
             {
-                segment->color = new QString(matcher.match(line).captured().replace("height=\"15\" bgcolor=\"", ""));
+                segment->color = new QString(matcher.match(line).captured());
                 segments->append(segment);
             }
             else

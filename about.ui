@@ -61,7 +61,7 @@
     </font>
    </property>
    <property name="text">
-    <string>22 of May 2018</string>
+    <string>2 of July 2018</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -79,7 +79,7 @@
     </font>
    </property>
    <property name="text">
-    <string>by Dźmitry Gotówka htotatut.gmail.com</string>
+    <string>by Dźmitry Gotówka htotatut@gmail.com</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">
@@ -99,7 +99,7 @@
     </font>
    </property>
    <property name="text">
-    <string>ChromoMatcher version 0.10.75</string>
+    <string>ChromoMatcher version 0.10.76</string>
    </property>
   </widget>
  </widget>
