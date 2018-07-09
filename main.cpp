@@ -23,10 +23,19 @@
 
 #include "mainwindow.h"
 #include <QApplication>
+//#include <QStyleFactory>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    // Reserved for future cross-platrorm builds
+    /*a.setStyle(QStyleFactory::create("Fusion"));
+
+    QFont font("Arial");
+    font.setStyleHint(QFont::Monospace);
+    font.setPointSize(10);
+    a.setFont(font);*/
 
     MainWindow w;
     w.show();

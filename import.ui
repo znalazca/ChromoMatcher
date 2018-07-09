@@ -1,26 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
- Copyright (C) 2018 Dzmitry Hatouka (Gotowka). htotatut@gmail.com
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 3, or (at your option)
- any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program. See COPYING.txt
- If not, see <https://www.gnu.org/licenses/>.
-
- Please note that this program has CLA (Contributor Licence Agreement).
- You accept it by making any contribution to this program.
- See file CONTRIBUTE.txt for more details.
- List of 3-rd party components and their licenses is in 3RDPARTIES.txt
--->
 <ui version="4.0">
  <class>Import</class>
  <widget class="QDialog" name="Import">
@@ -29,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>520</width>
-    <height>162</height>
+    <height>333</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,54 +17,37 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
+     <y>70</y>
      <width>501</width>
-     <height>51</height>
+     <height>221</height>
     </rect>
    </property>
    <property name="title">
-    <string>Source</string>
+    <string>Choose browse or drag and drop files here. Source will be auto detected.</string>
    </property>
-   <widget class="QRadioButton" name="rb2ormore">
+   <widget class="QListWidget" name="listImport">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>20</y>
-      <width>141</width>
-      <height>17</height>
+      <width>481</width>
+      <height>191</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Gedmatch: 2 or more...</string>
+    <property name="acceptDrops">
+     <bool>false</bool>
     </property>
-    <property name="checked">
-     <bool>true</bool>
+    <property name="showDropIndicator" stdset="0">
+     <bool>false</bool>
     </property>
-   </widget>
-   <widget class="QRadioButton" name="rbMatchingsegment">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>20</y>
-      <width>181</width>
-      <height>17</height>
-     </rect>
+    <property name="dragEnabled">
+     <bool>false</bool>
     </property>
-    <property name="text">
-     <string>Gedmatch: matching segment...</string>
+    <property name="dragDropOverwriteMode">
+     <bool>false</bool>
     </property>
-   </widget>
-   <widget class="QRadioButton" name="rbCSV">
-    <property name="geometry">
-     <rect>
-      <x>350</x>
-      <y>20</y>
-      <width>141</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>FTDNA or MyHeritage</string>
+    <property name="dragDropMode">
+     <enum>QAbstractItemView::NoDragDrop</enum>
     </property>
    </widget>
   </widget>
@@ -94,7 +55,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>70</y>
+     <y>10</y>
      <width>501</width>
      <height>51</height>
     </rect>
@@ -105,9 +66,9 @@
    <widget class="QRadioButton" name="rbIgnore">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>190</x>
       <y>20</y>
-      <width>101</width>
+      <width>91</width>
       <height>17</height>
      </rect>
     </property>
@@ -115,13 +76,13 @@
      <string>Ignore</string>
     </property>
     <property name="checked">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QRadioButton" name="rbOverwrite">
     <property name="geometry">
      <rect>
-      <x>110</x>
+      <x>90</x>
       <y>20</y>
       <width>91</width>
       <height>17</height>
@@ -134,7 +95,7 @@
    <widget class="QRadioButton" name="rbPreserve">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>10</x>
       <y>20</y>
       <width>81</width>
       <height>17</height>
@@ -142,6 +103,9 @@
     </property>
     <property name="text">
      <string>Preserve</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QLabel" name="lbMinimum">
@@ -177,24 +141,11 @@
     </property>
    </widget>
   </widget>
-  <widget class="QPushButton" name="btnCancel">
-   <property name="geometry">
-    <rect>
-     <x>437</x>
-     <y>130</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Cancel</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="btnBrowse">
    <property name="geometry">
     <rect>
-     <x>360</x>
-     <y>130</y>
+     <x>10</x>
+     <y>300</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -203,7 +154,57 @@
     <string>Browse...</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="btnDelete">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>300</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnImport">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>300</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnCancel">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>300</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </widget>
  </widget>
+ <tabstops>
+  <tabstop>rbPreserve</tabstop>
+  <tabstop>rbOverwrite</tabstop>
+  <tabstop>rbIgnore</tabstop>
+  <tabstop>sbSegment</tabstop>
+  <tabstop>listImport</tabstop>
+  <tabstop>btnBrowse</tabstop>
+  <tabstop>btnDelete</tabstop>
+  <tabstop>btnImport</tabstop>
+  <tabstop>btnCancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

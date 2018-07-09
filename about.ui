@@ -61,7 +61,7 @@
     </font>
    </property>
    <property name="text">
-    <string>2 of July 2018</string>
+    <string>4 of July 2018</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -99,7 +99,7 @@
     </font>
    </property>
    <property name="text">
-    <string>ChromoMatcher version 0.10.76</string>
+    <string>ChromoMatcher version 0.11</string>
    </property>
   </widget>
  </widget>

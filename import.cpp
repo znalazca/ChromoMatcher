@@ -25,6 +25,9 @@
 #include "ui_import.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QDragEnterEvent>
+#include <QMimeData>
+#include <QShortcut>
 
 Import::Import(QDialog *parent, Datum *d) :
     QDialog(parent),
@@ -46,6 +49,16 @@ Import::Import(QDialog *parent, Datum *d) :
     {
         ui->sbSegment->setValue(datum->Settings()->value("MinimumCM").toInt());
     }
+
+    ui->listImport->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+    // Allow drop down files
+    setAcceptDrops(true);
+
+    // Shortcut to delete files in listWidget. Static analysis tools may point here
+    // but it is not a problem because QShortcut will be deleted with listImport anyway
+    QShortcut* shortcut = new QShortcut(QKeySequence(QKeySequence::Delete), ui->listImport);
+    connect(shortcut, SIGNAL(activated()), this, SLOT(on_btnDelete_clicked()));
 }
 
 Import::~Import()
@@ -53,56 +66,101 @@ Import::~Import()
     delete ui;
 }
 
-void Import::on_btnBrowse_clicked()
+void Import::dragEnterEvent(QDragEnterEvent* event)
 {
-    // Select multiple files for import
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Select files with segments"), datum->Settings()->value("Matches_Path").toString(), tr("Web page files or CSV (*.htm *.html *.csv)"));
+    event->acceptProposedAction();
+}
 
-    if(fileNames.count() == 0)
+void Import::dragLeaveEvent(QDragLeaveEvent *event)
+{
+    event->accept();
+}
+
+void Import::dragMoveEvent(QDragMoveEvent *event)
+{
+    event->acceptProposedAction();
+}
+
+void Import::dropEvent(QDropEvent *event)
+{
+    const QMimeData* mimeData = event->mimeData();
+
+    if (mimeData->hasUrls())
     {
-        return;
+        QStringList pathList;
+        QList<QUrl> urlList = mimeData->urls();
+
+        for (int i = 0; i < urlList.size(); i++)
+        {
+            QString fileName = urlList.at(i).toLocalFile();
+            QString fileExtension = fileName.split(".").last();
+
+            bool validExtension = fileExtension == "csv" || fileExtension == "htm" || fileExtension == "html";
+
+            if(validExtension)
+            {
+                pathList.append(urlList.at(i).toLocalFile());
+            }
+        }
+
+        ui->listImport->addItems(pathList);
     }
+}
 
-    // Set default path in settings
-    QFileInfo fileInfo(fileNames.at(0));
-    datum->Settings()->setValue("Matches_Path", fileInfo.path());
-
+void Import::on_btnImport_clicked()
+{
     // QList with all segments in all files
-    QList<Segment*> *segments = new QList<Segment*>;
+    QList<Segment*> segments;
+    int count = 0;
 
-    // Process selected files one by one
-    foreach(QString fileName, fileNames)
+    for(int i = 0; i < ui->listImport->count(); i++)
     {
-        QFile *file = new QFile(fileName);
+        QString fileName = ui->listImport->item(i)->text();
+        QFile file(fileName);
 
-        if(!file->open(QFile::ReadOnly | QFile::Text))
+        if(!file.exists())
         {
-            QMessageBox::critical(this, tr("Error!"), file->errorString());
-            return;
+            this->setStatus(i, false, tr("not found!"));
         }
-
-        // Process files depending on source selected
-        if(ui->rb2ormore->isChecked())
+        else if(!file.open(QFile::ReadOnly | QFile::Text))
         {
-            this->twoOrMore(file, segments);
+            this->setStatus(i, false, file.errorString());
         }
-        else if(ui->rbMatchingsegment->isChecked())
-        {
-            this->matchingSegment(file, segments);
-        }
-        else if(ui->rbCSV->isChecked())
+        else if(fileName.split(".").last() == "csv")
         {
             this->CSV(file, segments);
         }
+        else
+        {
+            QString firstLine = file.readLine();
 
-        file->close();
+            if(firstLine.contains("<html><head>"))
+            {
+                this->matchingSegment(file, segments);
+            }
+            else
+            {
+                this->twoOrMore(file, segments);
+            }
+        }
+
+        file.close();
+
+        int segmentsFound = segments.count() - count;
+        if(segmentsFound == 0)
+        {
+            this->setStatus(i, false, tr("0 segments found!"));
+        }
+        else
+        {
+            this->setStatus(i, true, QString::number(segmentsFound) % tr(" segments found."));
+            count = segments.count();
+        }
     }
 
     datum->DB()->transaction();
 
-    int count = 0; // segments processed
-
-    foreach(Segment *segment, *segments)
+    foreach(Segment *segment, segments)
     {
         if(*segment->cm >= ui->sbSegment->value())
         {
@@ -146,10 +204,10 @@ void Import::on_btnBrowse_clicked()
                         "added, "
                         "kit) "
                         "VALUES ("
-                        "(SELECT number FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3), "
+                        "(SELECT number FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3 AND kit='%12'), "
                         "'%1', '%2', %3, %4, %5, %6, %7, '%8', '%9', '%10', "
-                        "(SELECT cgroup FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3), "
-                        "(SELECT comment FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3), "
+                        "(SELECT cgroup FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3 AND kit='%12'), "
+                        "(SELECT comment FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3 AND kit='%12'), "
                         "%11, '%12');";
             }
             else if(ui->rbPreserve->isChecked())
@@ -171,7 +229,7 @@ void Import::on_btnBrowse_clicked()
                         "added, "
                         "kit) "
                         "VALUES ("
-                        "(SELECT number FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3), "
+                        "(SELECT number FROM segments WHERE name = '%1' AND posbegin = %4 AND posend = %5 AND chrno = %3 AND kit='%12'), "
                         "'%1', '%2', %3, %4, %5, %6, %7, '%8', '%9', '%10', 1, '', %11, '%12');";
             }
 
@@ -197,14 +255,11 @@ void Import::on_btnBrowse_clicked()
                 count = 0;
                 break;
             }
-
-            count++;
         }
-    }    
+    }
 
-    qDeleteAll(segments->begin(), segments->end());
-    segments->clear();
-    delete segments;
+    qDeleteAll(segments.begin(), segments.end());
+    segments.clear();
 
     datum->DB()->commit();
 
@@ -215,20 +270,58 @@ void Import::on_btnBrowse_clicked()
 
     // Now need to update QTableWidget
     this->setProperty("update", true);
-    this->close();
+
+    ui->gbDuplicates->setEnabled(false);
+    ui->btnImport->setEnabled(false);
+    ui->btnDelete->setEnabled(false);
+    ui->btnBrowse->setEnabled(false);
+    this->setAcceptDrops(false);
+}
+
+// sets status of file processing
+void Import::setStatus(int i, bool isOk, QString text)
+{
+    if(isOk)
+    {
+        ui->listImport->item(i)->setTextColor(Qt::darkGreen);
+    }
+    else
+    {
+        ui->listImport->item(i)->setTextColor(Qt::red);
+    }
+
+    QString fileName = ui->listImport->item(i)->text();
+    ui->listImport->item(i)->setText(fileName % " - " % text);
+}
+
+void Import::on_btnBrowse_clicked()
+{
+    // Select multiple files for import
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Select files with segments"), datum->Settings()->value("Matches_Path").toString(), tr("Web page files or CSV (*.htm *.html *.csv)"));
+
+    if(fileNames.count() == 0)
+    {
+        return;
+    }
+
+    // Set default path in settings
+    QFileInfo fileInfo(fileNames.at(0));
+    datum->Settings()->setValue("Matches_Path", fileInfo.path());
+
+    ui->listImport->addItems(fileNames);
 }
 
 // Process CSV file from FTDNA of MyHeritage
-void Import::CSV(QFile *file, QList<Segment*> *segments)
+void Import::CSV(QFile &file, QList<Segment*> &segments)
 {
     // index for parsing different sources
     int n = 5;
 
-    file->readLine();
+    file.readLine();
 
-    while(!file->atEnd())
+    while(!file.atEnd())
     {
-        QString line = file->readLine();
+        QString line = file.readLine();
         QStringList records = line.split(QRegExp(",(?=(?:(?:[^\"]*\"){2})*[^\"]*$)")); // comma not in "
 
         int source;
@@ -271,18 +364,18 @@ void Import::CSV(QFile *file, QList<Segment*> *segments)
         segment->cm = new double(records.at(n).toDouble());
         segment->SNP = new int(records.at(n+1).toInt());
 
-        segments->append(segment);
+        segments.append(segment);
     }
 }
 
 // Gedmatch matching segment parsing
-void Import::matchingSegment(QFile *file, QList<Segment*> *segments)
+void Import::matchingSegment(QFile &file, QList<Segment*> &segments)
 {
     Segment *segment;
 
-    while(!file->atEnd())
+    while(!file.atEnd())
     {
-        QString line = file->readLine();
+        QString line = file.readLine();
 
         // Get kit
         QRegularExpression matcher(">[AMTHWEGZ]{1}[0-9]+<");
@@ -321,13 +414,13 @@ void Import::matchingSegment(QFile *file, QList<Segment*> *segments)
             segment->email = new QString(email);
 
             // Get color
-            line = file->readLine();
+            line = file.readLine();
 
             matcher.setPattern("#[A-Z0-9]{6}");
             if(matcher.match(line).hasMatch())
             {
                 segment->color = new QString(matcher.match(line).captured());
-                segments->append(segment);
+                segments.append(segment);
             }
             else
             {
@@ -338,7 +431,7 @@ void Import::matchingSegment(QFile *file, QList<Segment*> *segments)
 }
 
 // Gedmatch people who match 2 or more kits parse
-void Import::twoOrMore(QFile *file, QList<Segment*> *segments)
+void Import::twoOrMore(QFile &file, QList<Segment*> &segments)
 {
     Segment *segment;
 
@@ -346,9 +439,9 @@ void Import::twoOrMore(QFile *file, QList<Segment*> *segments)
     QString name;
     QString kit;
 
-    while(!file->atEnd())
+    while(!file.atEnd())
     {
-        QString line = file->readLine();
+        QString line = file.readLine();
 
         // Get chromosome
         QRegularExpression matcher("Chr [0-9]+<br><table");
@@ -392,13 +485,13 @@ void Import::twoOrMore(QFile *file, QList<Segment*> *segments)
                 segment->source = new int(TwoOrMore);
                 segment->kit = new QString(kit);
 
-                segments->append(segment);
+                segments.append(segment);
 
                 if((i + 1) < lines.count())
                 {
-                    chrno = int(*segments->last()->chrno);
-                    name = QString(*segments->last()->name);
-                    kit = QString(*segments->last()->kit);
+                    chrno = *segments.last()->chrno;
+                    name = *segments.last()->name;
+                    kit = *segments.last()->kit;
                 }
             }
         }
@@ -409,3 +502,12 @@ void Import::on_btnCancel_clicked()
 {
     this->close();
 }
+
+void Import::on_btnDelete_clicked()
+{
+    if(ui->btnDelete->isEnabled()) // Ignore shortcut if button is not enabled
+    {
+        qDeleteAll(ui->listImport->selectedItems());
+    }
+}
+

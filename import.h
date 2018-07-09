@@ -46,14 +46,26 @@ private slots:
     void on_btnCancel_clicked();
     void on_btnBrowse_clicked();
 
+    void on_btnDelete_clicked();
+
+    void on_btnImport_clicked();
+
 private:
     Ui::Import *ui;
 
     Datum *datum;
 
-    void twoOrMore(QFile *file, QList<Segment*> *segments);
-    void matchingSegment(QFile *file, QList<Segment*> *segments);
-    void CSV(QFile *file, QList<Segment*> *segments);
+    void twoOrMore(QFile &file, QList<Segment*> &segments);
+    void matchingSegment(QFile &file, QList<Segment*> &segments);
+    void CSV(QFile &file, QList<Segment*> &segments);
+
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dragLeaveEvent(QDragLeaveEvent *event);
+    void dragMoveEvent(QDragMoveEvent *event);
+    void dropEvent(QDropEvent *event);
+
+    // sets status of file processing
+    void setStatus(int i, bool isOk, QString text);
 
     // Enumeration represents sources
     enum
